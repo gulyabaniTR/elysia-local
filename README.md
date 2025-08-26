@@ -4,6 +4,25 @@
 >
 > If you encounter any issues, please [open an issue on GitHub](https://github.com/weaviate/elysia/issues).
 
+### Local Weaviate (Experimental)
+
+You can use a locally running Weaviate (e.g., Docker on `http://localhost:8080`). Set:
+
+```
+WCD_URL=http://localhost:8080
+WEAVIATE_IS_LOCAL=true
+```
+
+No API key is required in local mode. Alternatively, configure in Python:
+
+```python
+from elysia import configure
+configure(wcd_url="http://localhost:8080")
+```
+
+Ensure your local Weaviate allows anonymous access or configure auth accordingly. Then run preprocessing as usual.
+
+
 [![PyPI Downloads](https://static.pepy.tech/badge/elysia-ai)](https://pepy.tech/projects/elysia-ai) [![Demo](https://img.shields.io/badge/Check%20out%20the%20demo!-yellow?&style=flat-square&logo=react&logoColor=white)](https://elysia.weaviate.io/)
 
 Elysia is an agentic platform designed to use tools in a decision tree. A decision agent decides which tools to use dynamically based on its environment and context. You can use custom tools or use the pre-built tools designed to retrieve your data in a Weaviate cluster.
