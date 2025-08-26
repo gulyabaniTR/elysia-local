@@ -22,7 +22,7 @@ configure(wcd_url="http://localhost:8080")
 
 Ensure your local Weaviate allows anonymous access or configure auth accordingly. Then run preprocessing as usual.
 
-###📺 I also prepared a **demonstration video** to showcase how it works: [Watch on YouTube](https://www.youtube.com/watch?v=BgOvbrVzwDA)
+### 📺 I also prepared a **demonstration video** to showcase how it works: [Watch on YouTube](https://www.youtube.com/watch?v=BgOvbrVzwDA)
 
 
 [![PyPI Downloads](https://static.pepy.tech/badge/elysia-ai)](https://pepy.tech/projects/elysia-ai) [![Demo](https://img.shields.io/badge/Check%20out%20the%20demo!-yellow?&style=flat-square&logo=react&logoColor=white)](https://elysia.weaviate.io/)
