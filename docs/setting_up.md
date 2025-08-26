@@ -93,7 +93,23 @@ WCD_API_KEY=... # replace with your WCD_API_KEY
 
 Additionally, you need to _preprocess_ your collections for Elysia to use the built in Weaviate-based tools, see below for details.
 
-*Note: using a local Weaviate instance is currently not supported. This is coming soon! [You can sign up for a 14-day sandbox for free.](https://weaviate.io/deployment/serverless)
+### Local Weaviate (Experimental)
+
+You can use a locally running Weaviate (e.g., Docker on `http://localhost:8080`). Set:
+
+```
+WCD_URL=http://localhost:8080
+WEAVIATE_IS_LOCAL=true
+```
+
+No API key is required in local mode. Alternatively, configure in Python:
+
+```python
+from elysia import configure
+configure(wcd_url="http://localhost:8080")
+```
+
+Ensure your local Weaviate allows anonymous access or configure auth accordingly. Then run preprocessing as usual.
 
 ## Preprocessing Collections
 

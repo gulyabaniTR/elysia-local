@@ -11,6 +11,7 @@ import weaviate
 from weaviate.classes.init import Auth
 from weaviate.client import WeaviateClient, WeaviateAsyncClient
 from elysia.config import settings as environment_settings, Settings
+from urllib.parse import urlparse
 
 api_key_map = {
     # Regular API keys
@@ -144,7 +145,20 @@ class ClientManager:
 
         self.async_client = None
         self.async_init_completed = False
-        self.is_client = self.wcd_url != "" and self.wcd_api_key != ""
+
+        # Determine if connecting to local Weaviate (no API key required)
+        env_is_local = os.getenv("WEAVIATE_IS_LOCAL", "").lower() in ["1", "true", "yes"]
+        self.is_local = env_is_local or (
+            isinstance(self.wcd_url, str)
+            and (
+                self.wcd_url.startswith("http://localhost")
+                or self.wcd_url.startswith("http://127.0.0.1")
+                or self.wcd_url.startswith("http://0.0.0.0")
+            )
+        )
+
+        # Client is considered available if URL is provided and either API key is set (cloud) or local mode
+        self.is_client = self.wcd_url != "" and (self.wcd_api_key != "" or self.is_local)
 
         if self.logger:
             if self.wcd_api_key == "" and self.wcd_url == "":
@@ -158,10 +172,15 @@ class ClientManager:
                     "All Weaviate functionality will be disabled."
                 )
             elif self.wcd_api_key == "":
-                self.logger.warning(
-                    "WCD_API_KEY is not set. "
-                    "All Weaviate functionality will be disabled."
-                )
+                if self.is_local:
+                    self.logger.debug(
+                        "Local Weaviate detected (no API key). Enabling Weaviate functionality via custom connection."
+                    )
+                else:
+                    self.logger.warning(
+                        "WCD_API_KEY is not set. "
+                        "All Weaviate functionality will be disabled."
+                    )
             else:
                 self.logger.debug(
                     "Weaviate client initialised. "
@@ -236,9 +255,24 @@ class ClientManager:
         self.last_used_async_client = datetime.datetime.now()
 
     def get_client(self) -> WeaviateClient:
-        if self.wcd_url is None or self.wcd_api_key is None:
-            raise ValueError("WCD_URL and WCD_API_KEY must be set")
+        if self.wcd_url is None or self.wcd_url == "":
+            raise ValueError("WCD_URL must be set")
 
+        # Local/custom (no API key)
+        if self.is_local or self.wcd_api_key in (None, ""):
+            parsed = urlparse(self.wcd_url if "://" in self.wcd_url else f"http://{self.wcd_url}")
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 8080
+            grpc_port = 50051
+            return weaviate.connect_to_local(
+                host=host,
+                port=port,
+                grpc_port=grpc_port,
+                headers=self.headers,
+                skip_init_checks=True,
+            )
+
+        # Cloud (WCD)
         return weaviate.connect_to_weaviate_cloud(
             cluster_url=self.wcd_url,
             auth_credentials=Auth.api_key(self.wcd_api_key),
@@ -247,9 +281,24 @@ class ClientManager:
         )
 
     async def get_async_client(self) -> WeaviateAsyncClient:
-        if self.wcd_url is None or self.wcd_api_key is None:
-            raise ValueError("WCD_URL and WCD_API_KEY must be set")
+        if self.wcd_url is None or self.wcd_url == "":
+            raise ValueError("WCD_URL must be set")
 
+        # Local/custom (no API key)
+        if self.is_local or self.wcd_api_key in (None, ""):
+            parsed = urlparse(self.wcd_url if "://" in self.wcd_url else f"http://{self.wcd_url}")
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 8080
+            grpc_port = 50051
+            return weaviate.use_async_with_local(
+                host=host,
+                port=port,
+                grpc_port=grpc_port,
+                headers=self.headers,
+                skip_init_checks=True,
+            )
+
+        # Cloud (WCD)
         return weaviate.use_async_with_weaviate_cloud(
             cluster_url=self.wcd_url,
             auth_credentials=Auth.api_key(self.wcd_api_key),
