@@ -116,7 +116,8 @@ async def _evaluate_field_statistics(
             total_count=True, group_by=GroupByAggregate(prop=property, limit=30)
         )
 
-        if len(groups_response.groups) > 15:
+        grps = groups_response.groups or []
+        if len(grps) > 15:
             groups = [
                 {
                     "value": str(
@@ -124,7 +125,7 @@ async def _evaluate_field_statistics(
                     ),  # must force to string for weaviate
                     "count": group.total_count,
                 }
-                for group in groups_response.groups
+                for group in grps
                 if group.total_count > 1
             ]
         else:
@@ -133,12 +134,12 @@ async def _evaluate_field_statistics(
                     "value": str(group.grouped_by.value),
                     "count": group.total_count,
                 }
-                for group in groups_response.groups
+                for group in grps
             ]
 
         total_count = sum(group["count"] for group in groups)
-        remainder = len_collection - total_count
-        group_coverage = total_count / len_collection
+        remainder = max(len_collection - total_count, 0)
+        group_coverage = (total_count / len_collection) if len_collection > 0 else 0.0
         if remainder > 0:
             groups.append(
                 {
@@ -228,7 +229,16 @@ async def _evaluate_field_statistics(
 
     # List (lengths)
     elif properties[property].endswith("[]"):
-        lengths = [len(obj[property]) for obj in sample_objects]
+        lengths = []
+        for obj in sample_objects:
+            val = obj.get(property)
+            if isinstance(val, list):
+                lengths.append(len(val))
+            elif isinstance(val, str):
+                # tolerate string data accidentally stored in list-typed field
+                parts = [p.strip() for p in val.split(",") if p.strip()]
+                lengths.append(len(parts))
+            # ignore None and other types
 
         if len(lengths) == 0:
             out["range"] = None

@@ -140,7 +140,12 @@ preprocess(collection_names=["YourCollectionName"])
 
 <details>
 <summary><b>Can I use a locally running version of Weaviate such as with Docker?</b></summary>
-Locally running versions of Weaviate are currently not implemented in the current version of the app but this is planned for a future release. Stay tuned!
+Yes (experimental). Run Weaviate locally (e.g. `http://localhost:8080`) and set:
+```
+WCD_URL=http://localhost:8080
+WEAVIATE_IS_LOCAL=true
+```
+No API key is required in local mode. Then preprocess your collections and use Elysia as usual.
 </details>
 
 
